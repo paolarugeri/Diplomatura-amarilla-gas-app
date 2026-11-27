@@ -6,7 +6,7 @@ import { PaymentBadge, Spinner, StatusBadge } from './ui'
 import { supabase } from '../lib/supabase'
 import { useToast } from '../context/ToastContext'
 
-export const ORDER_SELECT = '*, order_items(*), order_status_history(*), email_notifications(status, created_at, error)'
+export const ORDER_SELECT = '*, order_items(*), order_status_history(*), email_notifications(kind, status, created_at, error)'
 
 export function OrderItemsTable({ order }: { order: Order }) {
   return (
@@ -80,7 +80,7 @@ export function OrderFacts({ order }: { order: Order }) {
         <dd className="mt-1">
           <PaymentBadge status={order.payment_status} />
         </dd>
-        {order.payment_method === 'efectivo' && order.payment_status === 'pendiente' && (
+        {order.payment_method === 'efectivo' && order.payment_status === 'pendiente' && order.status !== 'cancelado' && (
           <dd className="mt-1 text-xs text-ink-2">Abonás {formatMoney(order.total)} al repartidor al recibir el pedido.</dd>
         )}
       </div>

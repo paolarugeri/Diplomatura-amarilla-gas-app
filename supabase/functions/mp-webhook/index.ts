@@ -78,5 +78,13 @@ Deno.serve(async (req) => {
     console.error('Error aplicando pago', error)
     return json({ error: error.message }, 500)
   }
+
+  // Aviso por correo al cliente si el pedido cambió de estado (por ejemplo "Pago confirmado").
+  // La función de correo es idempotente: si el estado no cambió, no reenvía nada.
+  try {
+    await adminClient().functions.invoke('order-confirmation-email', { body: { order_id: orderId, kind: 'estado' } })
+  } catch (e) {
+    console.error('No se pudo pedir el aviso por correo', e)
+  }
   return json({ ok: true })
 })

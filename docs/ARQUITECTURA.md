@@ -58,6 +58,7 @@ Pedido: Pedido recibido → (Pendiente de pago → Pago confirmado) → En prepa
 - **Sin escritura directa de pedidos.** Se revocaron los permisos de `INSERT/UPDATE/DELETE` sobre pedidos, detalles, pagos e historial. Solo se modifican mediante funciones `SECURITY DEFINER` que validan permisos y reglas:
   - `create_order`: valida sesión, domicilio propio, productos activos, cantidades (1 a 20), medio de pago habilitado; calcula precios.
   - `admin_update_order`: exige rol admin y aplica las reglas de estados.
+  - `cancel_my_order`: el cliente cancela solo sus pedidos, y solo mientras están en *Recibido* o *Pendiente de pago* y no están pagados.
   - `apply_mp_payment`: solo la puede ejecutar el servidor (`service_role`), desde el webhook.
 - **El rol no se puede autoasignar:** el cliente solo puede modificar `full_name` y `phone` de su perfil (permiso por columna).
 - **Prevención de pedidos duplicados:**
@@ -79,5 +80,5 @@ Pedido: Pedido recibido → (Pendiente de pago → Pago confirmado) → En prepa
 
 - Nuevos medios de pago: agregar una fila en `payment_methods` y su función.
 - Zonas o costos de envío: nueva tabla relacionada a `addresses` / `orders`.
-- Notificaciones de cambio de estado por correo o WhatsApp: reutilizando `order_status_history` y una nueva Edge Function.
+- Avisos por WhatsApp: reutilizando `order_status_history` y la misma lógica de los avisos por correo.
 - App de repartidor: la vista **Entregas** ya funciona como herramienta de reparto desde el celular.

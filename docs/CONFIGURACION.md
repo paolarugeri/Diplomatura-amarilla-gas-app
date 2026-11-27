@@ -13,7 +13,7 @@ Esta guía deja la app funcionando en internet con un proyecto real de Supabase.
 
 ## 2. Crear las tablas y cargar los datos de prueba
 
-**Opción A, sin instalar nada:** en Supabase abrí **SQL Editor**, pegá todo el contenido de `supabase/migrations/20261124000001_esquema_inicial.sql` y ejecutalo. Después hacé lo mismo con `supabase/seed.sql` (usuarios demo, productos y pedidos de ejemplo).
+**Opción A, sin instalar nada:** en Supabase abrí **SQL Editor**, pegá todo el contenido de `supabase/migrations/20261124000001_esquema_inicial.sql` y ejecutalo. Repetí con `supabase/migrations/20261127000001_cancelacion_y_avisos.sql` (cancelación por el cliente). Después hacé lo mismo con `supabase/seed.sql` (usuarios demo, productos y pedidos de ejemplo).
 
 **Opción B, con la CLI:**
 
@@ -46,9 +46,9 @@ En **Authentication → Providers → Email**:
 3. En **Environment variables** cargá `VITE_SUPABASE_URL` y `VITE_SUPABASE_ANON_KEY`.
 4. Deploy. Abrí la URL desde el celular y usá “Agregar a pantalla de inicio” para instalarla como app (PWA).
 
-## 5. Correo de confirmación de pedidos
+## 5. Correos de pedidos
 
-El correo lo envía la Edge Function `order-confirmation-email`. Soporta dos proveedores; elegí uno.
+Los correos los envía la Edge Function `order-confirmation-email`: la confirmación al comprar y un aviso cada vez que el pedido pasa a *Pago confirmado*, *En preparación*, *En camino*, *Entregado* o *Cancelado*. Cada aviso se envía una sola vez por estado. Soporta dos proveedores; elegí uno.
 
 **Opción A: Resend (recomendado)**
 
@@ -73,7 +73,7 @@ npx supabase functions deploy mp-create-preference
 npx supabase functions deploy mp-webhook --no-verify-jwt
 ```
 
-Cada envío queda registrado en la tabla `email_notifications` con estado `enviado`, `error` o `no_configurado`, y se ve en el detalle del pedido dentro del panel.
+Cada envío queda registrado en la tabla `email_notifications` con su tipo (`confirmacion_pedido` o `estado_<estado>`) y estado `enviado`, `error` o `no_configurado`, y se ve en el historial del pedido dentro del panel.
 
 ## 6. Mercado Pago
 

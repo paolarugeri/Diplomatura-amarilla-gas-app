@@ -6,6 +6,7 @@ import type { Order, OrderStatus } from '../../lib/types'
 import { formatAddress, formatDateTime, formatMoney, itemName } from '../../lib/format'
 import { EmptyState, PageTitle, PaymentBadge, Spinner, StatusBadge } from '../../components/ui'
 import { useToast } from '../../context/ToastContext'
+import { requestStatusEmail } from '../../lib/hooks'
 import { AdminOrderPanel } from './AdminOrderPanel'
 
 const PENDING: OrderStatus[] = ['recibido', 'pendiente_pago', 'pago_confirmado', 'en_preparacion', 'en_camino']
@@ -40,8 +41,12 @@ export default function AdminDeliveries() {
       p_payment_status: collect ? 'pagado' : null,
       p_note: collect ? 'Entregado y cobrado en efectivo' : null,
     })
+    if (error) {
+      setBusyId(null)
+      return toast('error', friendlyError(error))
+    }
+    await requestStatusEmail(o.id)
     setBusyId(null)
-    if (error) return toast('error', friendlyError(error))
     toast('success', `${o.order_number}: ${next === 'entregado' ? 'entregado' : next === 'en_camino' ? 'en camino' : 'en preparación'}.`)
     load()
   }

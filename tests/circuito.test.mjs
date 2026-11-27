@@ -221,6 +221,56 @@ test('correo de confirmación: se envía una sola vez y solo para pedidos propio
   assert.equal(other.error?.context?.status, 404)
 })
 
+test('el cliente cancela su pedido mientras no se empezó a preparar', async () => {
+  const { data: o } = await order(lucia, [{ product_id: P.carga45, quantity: 1 }], ADDR_LUCIA)
+  // Otro cliente no puede cancelarlo
+  const ajeno = await martin.rpc('cancel_my_order', { p_order_id: o.id })
+  assert.ok(ajeno.error)
+  // El dueño sí, con motivo
+  const { data: c, error } = await lucia.rpc('cancel_my_order', { p_order_id: o.id, p_reason: 'Me equivoqué de producto' })
+  assert.ifError(error)
+  assert.equal(c.status, 'cancelado')
+  assert.ok(c.cancelled_at)
+  const { data: h } = await lucia.from('order_status_history').select('*').eq('order_id', o.id).eq('status', 'cancelado').single()
+  assert.equal(h.source, 'cliente')
+  assert.match(h.note, /Me equivoqué/)
+  // Repetir la cancelación no falla ni duplica el historial
+  assert.ifError((await lucia.rpc('cancel_my_order', { p_order_id: o.id })).error)
+  const { count } = await lucia.from('order_status_history').select('*', { count: 'exact', head: true }).eq('order_id', o.id).eq('status', 'cancelado')
+  assert.equal(count, 1)
+})
+
+test('el cliente no puede cancelar un pedido que ya está en preparación', async () => {
+  const { data: o } = await order(lucia, [{ product_id: P.chapa10, with_refill: true, quantity: 1 }], ADDR_LUCIA)
+  assert.ifError((await admin.rpc('admin_update_order', { p_order_id: o.id, p_status: 'en_preparacion' })).error)
+  const { error } = await lucia.rpc('cancel_my_order', { p_order_id: o.id })
+  assert.match(error?.message ?? '', /ya se está preparando/)
+  await admin.rpc('admin_update_order', { p_order_id: o.id, p_status: 'cancelado' })
+})
+
+test('avisos por correo: uno por cada estado, sin repetir y solo del estado real', async () => {
+  const { data: o } = await order(martin, [{ product_id: P.plastico10, with_refill: true, quantity: 1 }], ADDR_MARTIN)
+  const aviso = (c) => c.functions.invoke('order-confirmation-email', { body: { order_id: o.id, kind: 'estado' } })
+  // "Recibido" no genera aviso (ya lo cubre la confirmación)
+  assert.equal((await aviso(martin)).data.status, 'sin_aviso')
+  for (const s of ['en_preparacion', 'en_camino']) {
+    assert.ifError((await admin.rpc('admin_update_order', { p_order_id: o.id, p_status: s })).error)
+    const r = await aviso(admin)
+    assert.ifError(r.error)
+    assert.equal(r.data.kind, `estado_${s}`)
+    assert.ok(['enviado', 'no_configurado'].includes(r.data.status))
+    if (r.data.status === 'enviado') assert.equal((await aviso(martin)).data.repeated, true)
+  }
+  // Otro cliente no puede pedir avisos de un pedido ajeno
+  const other = await lucia.functions.invoke('order-confirmation-email', { body: { order_id: o.id, kind: 'estado' } })
+  assert.equal(other.error?.context?.status, 404)
+  assert.ifError((await admin.rpc('admin_update_order', { p_order_id: o.id, p_status: 'entregado', p_payment_status: 'pagado' })).error)
+  assert.equal((await aviso(admin)).data.kind, 'estado_entregado')
+  const { data: mails } = await admin.from('email_notifications').select('kind').eq('order_id', o.id)
+  const kinds = mails.map((m) => m.kind)
+  for (const k of ['estado_en_preparacion', 'estado_en_camino', 'estado_entregado']) assert.ok(kinds.includes(k), k)
+})
+
 test('indicadores del panel', async () => {
   const { data, error } = await admin.rpc('admin_dashboard')
   assert.ifError(error)
