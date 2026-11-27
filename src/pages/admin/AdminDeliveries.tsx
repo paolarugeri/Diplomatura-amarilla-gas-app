@@ -8,6 +8,7 @@ import { EmptyState, PageTitle, PaymentBadge, Spinner, StatusBadge } from '../..
 import { useToast } from '../../context/ToastContext'
 import { requestStatusEmail } from '../../lib/hooks'
 import { AdminOrderPanel } from './AdminOrderPanel'
+import { AssignDriver, useDrivers } from './AssignDriver'
 
 const PENDING: OrderStatus[] = ['recibido', 'pendiente_pago', 'pago_confirmado', 'en_preparacion', 'en_camino']
 
@@ -18,6 +19,7 @@ export default function AdminDeliveries() {
   const [busyId, setBusyId] = useState<string | null>(null)
   const [open, setOpen] = useState<string | null>(null)
   const toast = useToast()
+  const drivers = useDrivers()
 
   const load = useCallback(async () => {
     setOrders(null)
@@ -76,7 +78,7 @@ export default function AdminDeliveries() {
 
   return (
     <div>
-      <PageTitle title="Entregas" subtitle="Organizá el reparto y actualizá el estado de cada entrega." />
+      <PageTitle title="Entregas" subtitle="Organizá el reparto, asigná cada pedido a un repartidor y actualizá el estado de cada entrega." />
       <div className="mb-4 inline-flex rounded-xl bg-white p-1 shadow-card" role="tablist">
         {(['pendientes', 'entregados'] as const).map((v) => (
           <button
@@ -128,6 +130,9 @@ export default function AdminDeliveries() {
                   <PaymentBadge status={o.payment_status} />
                 </div>
                 {o.notes && <p className="mt-2 rounded-lg bg-brand-50 p-2 text-xs">{o.notes}</p>}
+                <div className="mt-3">
+                  <AssignDriver order={o} drivers={drivers} onChanged={load} compact />
+                </div>
                 {view === 'pendientes' && (
                   <div className="mt-auto flex items-center gap-2 pt-3">
                     <a href={maps} target="_blank" rel="noreferrer" className="btn-outline px-3 py-2.5 text-sm" aria-label="Cómo llegar">

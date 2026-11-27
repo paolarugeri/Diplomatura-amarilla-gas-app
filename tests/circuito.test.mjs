@@ -32,6 +32,8 @@ const lucia = await login('lucia.gomez@example.com')
 const martin = await login('martin.perez@example.com')
 const admin = await login('admin@amarillagas.com.ar')
 const sofia = await login('sofia.rios@example.com')
+const reparto = await login('reparto@amarillagas.com.ar')
+const DRIVER = 'b0000000-0000-0000-0000-000000000001'
 const anon = createClient(URL, ANON, { auth: { persistSession: false } })
 
 test('precios calculados en el servidor: envase + carga', async () => {
@@ -298,4 +300,37 @@ test('indicadores del panel', async () => {
   assert.equal(data.by_status.length, 7)
   assert.equal(data.by_payment.length, 2)
   assert.equal(data.last_days.length, 14)
+})
+
+test('repartidor: ve solo sus pedidos asignados y marca En camino / Entregado', async () => {
+  const { data: o } = await order(martin, [{ product_id: P.carga10, quantity: 1 }], ADDR_MARTIN)
+  // Sin asignar: el repartidor no lo ve ni lo puede mover
+  assert.equal((await reparto.from('orders').select('id').eq('id', o.id)).data.length, 0)
+  assert.ok((await reparto.rpc('driver_update_order', { p_order_id: o.id, p_status: 'en_camino' })).error)
+  // Solo un admin asigna pedidos
+  assert.ok((await martin.rpc('admin_assign_order', { p_order_id: o.id, p_driver_id: DRIVER })).error)
+  assert.ifError((await admin.rpc('admin_assign_order', { p_order_id: o.id, p_driver_id: DRIVER })).error)
+  assert.equal((await reparto.from('orders').select('id').eq('id', o.id)).data.length, 1)
+  // No puede saltear "En camino" ni usar otros estados
+  assert.ok((await reparto.rpc('driver_update_order', { p_order_id: o.id, p_status: 'entregado' })).error)
+  assert.ok((await reparto.rpc('driver_update_order', { p_order_id: o.id, p_status: 'cancelado' })).error)
+  assert.ifError((await reparto.rpc('driver_update_order', { p_order_id: o.id, p_status: 'en_camino' })).error)
+  const { data: done, error } = await reparto.rpc('driver_update_order', { p_order_id: o.id, p_status: 'entregado' })
+  assert.ifError(error)
+  assert.equal(done.status, 'entregado')
+  assert.equal(done.payment_status, 'pagado') // efectivo cobrado al entregar
+  // El repartidor puede pedir el aviso por correo de su pedido
+  assert.ifError((await reparto.functions.invoke('order-confirmation-email', { body: { order_id: o.id, kind: 'estado' } })).error)
+})
+
+test('permisos de perfiles: solo un admin cambia roles', async () => {
+  const SOFIA = 'c0000000-0000-0000-0000-000000000003'
+  assert.ok((await sofia.rpc('admin_set_user_role', { p_user_id: SOFIA, p_role: 'admin' })).error)
+  assert.ok((await reparto.rpc('admin_set_user_role', { p_user_id: DRIVER, p_role: 'admin' })).error)
+  assert.ok((await sofia.from('profiles').update({ role: 'admin' }).eq('id', SOFIA)).error)
+  assert.ok((await admin.rpc('admin_set_user_role', { p_user_id: 'a0000000-0000-0000-0000-000000000001', p_role: 'cliente' })).error)
+  const { data, error } = await admin.rpc('admin_set_user_role', { p_user_id: SOFIA, p_role: 'repartidor' })
+  assert.ifError(error)
+  assert.equal(data.role, 'repartidor')
+  assert.ifError((await admin.rpc('admin_set_user_role', { p_user_id: SOFIA, p_role: 'cliente' })).error)
 })

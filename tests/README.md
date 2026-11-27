@@ -11,7 +11,7 @@ npm run functions:serve     # en otra terminal, para probar el correo
 SUPABASE_ANON_KEY=<clave anon local> npm run test:circuito
 ```
 
-Cubre: precios de las 8 combinaciones del catálogo, pedidos combinados, idempotencia, bloqueo de duplicados, validaciones, acceso sin sesión, permisos de cliente (no puede ver datos ajenos, marcar pagos, cambiar precios ni hacerse admin), flujo de entrega con cobro en efectivo, reglas de Mercado Pago, conservación del precio de compra, productos desactivados, correo idempotente e indicadores.
+Cubre: precios de las 8 combinaciones del catálogo, pedidos combinados, idempotencia, bloqueo de duplicados, validaciones, acceso sin sesión, permisos de cliente (no puede ver datos ajenos, marcar pagos, cambiar precios ni hacerse admin), flujo de entrega con cobro en efectivo, perfil repartidor y gestión de permisos, reglas de Mercado Pago, conservación del precio de compra, productos desactivados, correo idempotente e indicadores.
 
 ## Correo en local
 

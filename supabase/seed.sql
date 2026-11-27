@@ -5,6 +5,7 @@
 --   lucia.gomez@example.com    -> cliente
 --   martin.perez@example.com   -> cliente
 --   sofia.rios@example.com     -> cliente
+--   reparto@amarillagas.com.ar -> repartidor
 -- =====================================================================
 
 -- ---------- Productos ----------
@@ -37,7 +38,8 @@ begin
       ('a0000000-0000-0000-0000-000000000001'::uuid, 'admin@amarillagas.com.ar', 'Administración Amarilla Gas', '11 4000-0000'),
       ('c0000000-0000-0000-0000-000000000001'::uuid, 'lucia.gomez@example.com',  'Lucía Gómez',  '11 5555-1234'),
       ('c0000000-0000-0000-0000-000000000002'::uuid, 'martin.perez@example.com', 'Martín Pérez', '11 5555-9876'),
-      ('c0000000-0000-0000-0000-000000000003'::uuid, 'sofia.rios@example.com',   'Sofía Ríos',   '221 444-3210')
+      ('c0000000-0000-0000-0000-000000000003'::uuid, 'sofia.rios@example.com',   'Sofía Ríos',   '221 444-3210'),
+      ('b0000000-0000-0000-0000-000000000001'::uuid, 'reparto@amarillagas.com.ar', 'Jorge Repartidor', '11 4000-1111')
     ) as t(id, email, full_name, phone)
   loop
     insert into auth.users (
@@ -60,6 +62,7 @@ end;
 $$;
 
 update public.profiles set role = 'admin' where id = 'a0000000-0000-0000-0000-000000000001';
+update public.profiles set role = 'repartidor' where id = 'b0000000-0000-0000-0000-000000000001';
 
 -- ---------- Domicilios ----------
 insert into public.addresses (id, user_id, label, street, number, city, province, postal_code, reference, lat, lng, is_default) values
@@ -142,6 +145,11 @@ begin
   end loop;
 end;
 $$;
+
+-- Los pedidos en curso (en preparación y en camino) quedan asignados al repartidor demo
+update public.orders
+   set assigned_to = 'b0000000-0000-0000-0000-000000000001', assigned_at = now()
+ where status in ('en_preparacion', 'en_camino');
 
 -- El pago electrónico queda deshabilitado hasta configurar Mercado Pago (ver docs/CONFIGURACION.md)
 update public.store_settings set mp_enabled = false where id = 1;

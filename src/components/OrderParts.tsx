@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Check, CreditCard, MapPin } from 'lucide-react'
+import { Check, CreditCard, MapPin, Truck } from 'lucide-react'
 import type { Order, OrderStatus } from '../lib/types'
 import { formatAddress, formatDateTime, formatMoney, itemName, orderStatusLabel, paymentMethodLabel } from '../lib/format'
 import { PaymentBadge, Spinner, StatusBadge } from './ui'
@@ -109,14 +109,22 @@ export function OrderTimeline({ order }: { order: Order }) {
       {steps.map((s, i) => {
         const done = i <= current
         const t = when(s) ?? (i === 0 ? order.created_at : undefined)
+        // El paso "En camino" se muestra con un camión; se destaca mientras el pedido va en viaje.
+        const truck = s === 'en_camino'
+        const onTheWay = truck && order.status === 'en_camino'
         return (
           <li key={s} className="relative flex items-start gap-3">
             {i < steps.length - 1 && <span className={`absolute left-[13px] top-7 h-[calc(100%-4px)] w-0.5 ${i < current ? 'bg-ink' : 'bg-line'}`} aria-hidden />}
-            <span className={`relative z-10 grid size-7 shrink-0 place-items-center rounded-full ${done ? 'bg-ink text-brand' : 'border-2 border-line bg-white'}`}>
-              {done && <Check className="size-4" />}
+            <span
+              className={`relative z-10 grid size-7 shrink-0 place-items-center rounded-full ${
+                onTheWay ? 'bg-brand text-ink ring-4 ring-brand/40' : done ? 'bg-ink text-brand' : truck ? 'border-2 border-line bg-white text-muted' : 'border-2 border-line bg-white'
+              }`}
+            >
+              {truck ? <Truck className="size-4" aria-hidden /> : done && <Check className="size-4" />}
             </span>
             <span className="pt-0.5">
               <span className={`block text-sm font-bold ${done ? '' : 'text-muted'}`}>{orderStatusLabel[s]}</span>
+              {onTheWay && <span className="block text-xs font-semibold text-brand-800">El repartidor va camino a tu domicilio.</span>}
               {done && t && <span className="block text-xs text-muted">{formatDateTime(t)}</span>}
             </span>
           </li>

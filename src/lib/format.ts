@@ -1,4 +1,4 @@
-import type { ContainerType, OrderStatus, PaymentMethod, PaymentStatus, AddressSnapshot } from './types'
+import type { ContainerType, OrderStatus, PaymentMethod, PaymentStatus, AddressSnapshot, Role } from './types'
 
 const money = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 })
 export const formatMoney = (n: number | string) => money.format(Number(n))
@@ -34,6 +34,12 @@ export const paymentStatusLabel: Record<PaymentStatus, string> = {
   pagado: 'Pagado',
   rechazado: 'Rechazado',
   reintegrado: 'Reintegrado',
+}
+
+export const roleLabel: Record<Role, string> = {
+  cliente: 'Cliente',
+  admin: 'Administrador',
+  repartidor: 'Repartidor',
 }
 
 export const paymentMethodLabel: Record<PaymentMethod, string> = {

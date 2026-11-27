@@ -8,6 +8,7 @@ interface AuthState {
   profile: Profile | null
   loading: boolean
   isAdmin: boolean
+  isDriver: boolean
   refreshProfile: () => Promise<void>
   signOut: () => Promise<void>
 }
@@ -54,6 +55,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // La interfaz usa el rol solo para mostrar u ocultar menús;
     // los permisos reales se validan en la base de datos (RLS y funciones).
     isAdmin: profile?.role === 'admin',
+    isDriver: profile?.role === 'repartidor',
     refreshProfile: () => loadProfile(session?.user.id),
     signOut: async () => {
       await supabase.auth.signOut()

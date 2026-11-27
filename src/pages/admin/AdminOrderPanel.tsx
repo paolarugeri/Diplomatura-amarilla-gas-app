@@ -7,6 +7,7 @@ import { ORDER_SELECT, OrderFacts, OrderItemsTable } from '../../components/Orde
 import { Alert, PageLoader, SelectField, Spinner, StatusBadge, TextAreaField } from '../../components/ui'
 import { useToast } from '../../context/ToastContext'
 import { requestStatusEmail } from '../../lib/hooks'
+import { AssignDriver, useDrivers } from './AssignDriver'
 
 function emailKindLabel(kind?: string) {
   if (!kind || kind === 'confirmacion_pedido') return 'Correo de confirmación'
@@ -16,7 +17,7 @@ function emailKindLabel(kind?: string) {
   return `Aviso “${orderStatusLabel[status] ?? status}”`
 }
 
-const sourceLabel = { cliente: 'Cliente', admin: 'Empresa', pasarela: 'Mercado Pago', sistema: 'Sistema' }
+const sourceLabel = { cliente: 'Cliente', admin: 'Empresa', pasarela: 'Mercado Pago', sistema: 'Sistema', repartidor: 'Repartidor' }
 
 export function AdminOrderPanel({ orderId, onClose, onChanged }: { orderId: string; onClose: () => void; onChanged: () => void }) {
   const [order, setOrder] = useState<Order | null>(null)
@@ -26,6 +27,7 @@ export function AdminOrderPanel({ orderId, onClose, onChanged }: { orderId: stri
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const toast = useToast()
+  const drivers = useDrivers()
 
   async function load() {
     const { data } = await supabase.from('orders').select(ORDER_SELECT).eq('id', orderId).single()
@@ -103,6 +105,19 @@ export function AdminOrderPanel({ orderId, onClose, onChanged }: { orderId: stri
                     <b>Comentarios del cliente:</b> {order.notes}
                   </p>
                 )}
+              </section>
+
+              <section className="card space-y-2 p-4">
+                <h3 className="font-extrabold">Repartidor</h3>
+                <AssignDriver
+                  order={order}
+                  drivers={drivers}
+                  onChanged={async () => {
+                    await load()
+                    onChanged()
+                  }}
+                />
+                <p className="text-xs text-muted">El repartidor ve solo los pedidos que tiene asignados y puede marcarlos “En camino” y “Entregado”.</p>
               </section>
 
               <section className="card space-y-3 p-4">

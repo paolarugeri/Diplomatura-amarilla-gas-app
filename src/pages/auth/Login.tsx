@@ -38,6 +38,7 @@ export default function Login() {
     toast('success', `¡Hola, ${profile?.full_name?.split(' ')[0] ?? ''}!`)
     if (from && from !== '/ingresar') navigate(from, { replace: true })
     else if (profile?.role === 'admin') navigate('/admin', { replace: true })
+    else if (profile?.role === 'repartidor') navigate('/reparto', { replace: true })
     else if (!count) navigate('/domicilios/nuevo?primero=1', { replace: true })
     else navigate('/catalogo', { replace: true })
   }

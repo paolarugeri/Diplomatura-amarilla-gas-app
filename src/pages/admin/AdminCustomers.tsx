@@ -16,7 +16,7 @@ export function AdminCustomers() {
   useEffect(() => {
     supabase
       .from('profiles')
-      .select('*, orders(total, status, created_at)')
+      .select('*, orders!orders_user_id_fkey(total, status, created_at)')
       .eq('role', 'cliente')
       .order('created_at', { ascending: false })
       .then(({ data }) => setRows((data as Row[]) ?? []))

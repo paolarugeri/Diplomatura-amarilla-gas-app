@@ -23,7 +23,7 @@ Se eligió **Supabase** por ser una base relacional real (PostgreSQL), con auten
 | Tabla | Contenido |
 |---|---|
 | `auth.users` | Usuarios (gestionado por Supabase Auth, contraseñas cifradas) |
-| `profiles` | Clientes: nombre, correo, teléfono, **rol** (`cliente` / `admin`) |
+| `profiles` | Clientes: nombre, correo, teléfono, **rol** (`cliente` / `admin` / `repartidor`) |
 | `addresses` | Domicilios de cada cliente, con coordenadas opcionales y uno habitual |
 | `products` | Cargas y envases: capacidad, tipo de envase, precio, imagen, activo, carga asociada |
 | `product_prices` | Historial de precios (se completa solo con un trigger) |
@@ -54,10 +54,12 @@ Pedido: Pedido recibido → (Pendiente de pago → Pago confirmado) → En prepa
 
 ## Seguridad
 
-- **RLS en todas las tablas.** Un cliente solo ve sus perfiles, domicilios y pedidos. El administrador ve todo mediante la función `is_admin()`.
+- **RLS en todas las tablas.** Un cliente solo ve sus perfiles, domicilios y pedidos. El administrador ve todo mediante la función `is_admin()`. El repartidor ve solo los pedidos que tiene asignados (`orders.assigned_to`, función `is_driver()`).
 - **Sin escritura directa de pedidos.** Se revocaron los permisos de `INSERT/UPDATE/DELETE` sobre pedidos, detalles, pagos e historial. Solo se modifican mediante funciones `SECURITY DEFINER` que validan permisos y reglas:
   - `create_order`: valida sesión, domicilio propio, productos activos, cantidades (1 a 20), medio de pago habilitado; calcula precios.
   - `admin_update_order`: exige rol admin y aplica las reglas de estados.
+  - `admin_set_user_role` y `admin_assign_order`: solo un admin cambia perfiles (nunca el propio) y asigna pedidos a repartidores.
+  - `driver_update_order`: el repartidor solo puede marcar sus pedidos "En camino" y "Entregado" (cobra el efectivo al entregar).
   - `cancel_my_order`: el cliente cancela solo sus pedidos, y solo mientras están en *Recibido* o *Pendiente de pago* y no están pagados.
   - `apply_mp_payment`: solo la puede ejecutar el servidor (`service_role`), desde el webhook.
 - **El rol no se puede autoasignar:** el cliente solo puede modificar `full_name` y `phone` de su perfil (permiso por columna).

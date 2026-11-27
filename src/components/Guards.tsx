@@ -3,6 +3,7 @@ import { Navigate, useLocation } from 'react-router-dom'
 import { ShieldAlert } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { EmptyState, PageLoader } from './ui'
+import type { Role } from '../lib/types'
 
 export function RequireAuth({ children }: { children: ReactNode }) {
   const { session, loading } = useAuth()
@@ -13,15 +14,15 @@ export function RequireAuth({ children }: { children: ReactNode }) {
 }
 
 /**
- * Oculta el panel a quien no es administrador. Es solo una ayuda de navegación:
+ * Oculta una sección a quien no tiene el perfil indicado. Es solo una ayuda de navegación:
  * la protección real está en la base (RLS y funciones con verificación de rol).
  */
-export function RequireAdmin({ children }: { children: ReactNode }) {
+function RequireRole({ role, children }: { role: Role; children: ReactNode }) {
   const { session, profile, loading } = useAuth()
   const location = useLocation()
   if (loading || (session && !profile)) return <PageLoader />
   if (!session) return <Navigate to="/ingresar" replace state={{ from: location.pathname }} />
-  if (profile?.role !== 'admin')
+  if (profile?.role !== role)
     return (
       <div className="mx-auto max-w-lg p-6">
         <EmptyState
@@ -33,3 +34,6 @@ export function RequireAdmin({ children }: { children: ReactNode }) {
     )
   return <>{children}</>
 }
+
+export const RequireAdmin = ({ children }: { children: ReactNode }) => <RequireRole role="admin">{children}</RequireRole>
+export const RequireDriver = ({ children }: { children: ReactNode }) => <RequireRole role="repartidor">{children}</RequireRole>
