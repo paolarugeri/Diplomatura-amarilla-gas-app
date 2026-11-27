@@ -4,6 +4,7 @@ import { Logo } from '../components/Logo'
 import { useAuth } from '../context/AuthContext'
 import { PageLoader } from '../components/ui'
 import { homeFor } from '../lib/home'
+import { PromoBanner } from '../components/PromoBanner'
 
 export default function Welcome() {
   const { session, profile, loading } = useAuth()
@@ -54,6 +55,9 @@ export default function Welcome() {
       </div>
 
       <div className="relative -mt-2 bg-white pb-10">
+        <div className="mx-auto max-w-4xl px-5 pb-6">
+          <PromoBanner dismissible={false} signup className="mb-0" />
+        </div>
         <ul className="mx-auto grid max-w-4xl gap-3 px-5 sm:grid-cols-3">
           {[
             { icon: ShieldCheck, title: 'Envases certificados', text: 'Garrafas controladas y precintadas.' },
