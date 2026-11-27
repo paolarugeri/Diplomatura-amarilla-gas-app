@@ -10,6 +10,8 @@ import { requestStatusEmail } from '../../lib/hooks'
 
 function emailKindLabel(kind?: string) {
   if (!kind || kind === 'confirmacion_pedido') return 'Correo de confirmación'
+  if (kind === 'empresa_pedido_nuevo') return 'Aviso interno de pedido nuevo'
+  if (kind === 'empresa_cancelado_cliente') return 'Aviso interno de cancelación'
   const status = kind.replace(/^estado_/, '') as OrderStatus
   return `Aviso “${orderStatusLabel[status] ?? status}”`
 }

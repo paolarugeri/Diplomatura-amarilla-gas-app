@@ -48,7 +48,7 @@ En **Authentication → Providers → Email**:
 
 ## 5. Correos de pedidos
 
-Los correos los envía la Edge Function `order-confirmation-email`: la confirmación al comprar y un aviso cada vez que el pedido pasa a *Pago confirmado*, *En preparación*, *En camino*, *Entregado* o *Cancelado*. Cada aviso se envía una sola vez por estado. Soporta dos proveedores; elegí uno.
+Los correos los envía la Edge Function `order-confirmation-email`: la confirmación al comprar y un aviso cada vez que el pedido pasa a *Pago confirmado*, *En preparación*, *En camino*, *Entregado* o *Cancelado*. Cada aviso se envía una sola vez por estado. Además, el negocio recibe un aviso interno por cada **pedido nuevo** y cada **cancelación hecha por el cliente** (con el motivo), en la dirección del secreto `ADMIN_EMAIL` (si no está, se usa `SMTP_USER`). Soporta dos proveedores; elegí uno.
 
 **Opción A: Resend (recomendado)**
 
