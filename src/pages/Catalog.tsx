@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { MapPin, PackageOpen, RefreshCw, ShoppingCart } from 'lucide-react'
 import { ProductCard } from '../components/ProductCard'
+import { PromoBanner } from '../components/PromoBanner'
 import { EmptyState, PageLoader } from '../components/ui'
 import { useCart } from '../context/CartContext'
 import { useAuth } from '../context/AuthContext'
@@ -36,6 +37,7 @@ export default function Catalog() {
 
   return (
     <div>
+      <PromoBanner />
       {session && address !== undefined && (
         <Link
           to={address ? '/perfil#domicilios' : '/domicilios/nuevo?volver=/catalogo'}
