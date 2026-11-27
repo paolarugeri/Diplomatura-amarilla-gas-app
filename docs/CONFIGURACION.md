@@ -61,6 +61,8 @@ Los correos los envía la Edge Function `order-confirmation-email`: la confirmac
 1. En la cuenta de Google activá la verificación en dos pasos y generá una **contraseña de aplicación** (<https://myaccount.google.com/apppasswords>).
 2. Secretos: `SMTP_HOST=smtp.gmail.com`, `SMTP_PORT=465`, `SMTP_USER=tucuenta@gmail.com`, `SMTP_PASS=<contraseña de aplicación>`, `EMAIL_FROM=Amarilla Gas <tucuenta@gmail.com>`.
 
+Con Gmail, `EMAIL_FROM` tiene que ser la misma cuenta que `SMTP_USER`: Gmail reemplaza cualquier otro remitente por la cuenta con la que se inicia sesión. Si también está cargado `RESEND_API_KEY`, la función usa Resend antes que SMTP, así que para enviar por Gmail hay que quitarlo (`npx supabase secrets unset RESEND_API_KEY`).
+
 En ambos casos cargá también `APP_URL` con la dirección pública de la app (para el logo y el botón “Seguir mi pedido”).
 
 Desplegar las funciones y cargar los secretos:
