@@ -22,7 +22,7 @@ export default function OrderConfirmation() {
       const o = (data as Order) ?? null
       setOrder(o)
       if (!o) return
-      const last = [...(o.email_notifications ?? [])].sort((a, b) => b.created_at.localeCompare(a.created_at))[0]
+      const last = [...(o.email_notifications ?? [])].filter((m) => (m.kind ?? 'confirmacion_pedido') === 'confirmacion_pedido').sort((a, b) => b.created_at.localeCompare(a.created_at))[0]
       if (last) setEmailStatus(last.status)
       else if (!asked.current) {
         // Si el correo no se pidió todavía (p. ej. se cerró la pestaña), se solicita ahora.

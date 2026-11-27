@@ -112,7 +112,7 @@ export interface Order {
   cancelled_at: string | null
   order_items?: OrderItem[]
   order_status_history?: OrderHistory[]
-  email_notifications?: { status: string; created_at: string; error: string | null }[]
+  email_notifications?: { kind?: string; status: string; created_at: string; error: string | null }[]
 }
 
 export interface StoreSettings {

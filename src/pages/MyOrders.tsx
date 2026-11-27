@@ -1,10 +1,11 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { ChevronRight, Package, RotateCcw } from 'lucide-react'
-import { supabase } from '../lib/supabase'
+import { ChevronRight, Package, RotateCcw, XCircle } from 'lucide-react'
+import { friendlyError, supabase } from '../lib/supabase'
+import { customerCanCancel, requestStatusEmail } from '../lib/hooks'
 import type { Order } from '../lib/types'
 import { formatAddress, formatDate, formatDateTime, formatMoney, itemName, paymentMethodLabel } from '../lib/format'
-import { EmptyState, PageLoader, PageTitle, PaymentBadge, StatusBadge } from '../components/ui'
+import { Alert, EmptyState, PageLoader, PageTitle, PaymentBadge, Spinner, StatusBadge, TextAreaField } from '../components/ui'
 import { ORDER_SELECT, OrderFacts, OrderItemsTable, OrderTimeline, PayWithMercadoPago } from '../components/OrderParts'
 import { useCart } from '../context/CartContext'
 import { useToast } from '../context/ToastContext'
@@ -104,19 +105,66 @@ export function MyOrders() {
   )
 }
 
+function CancelOrder({ order, onCancelled }: { order: Order; onCancelled: () => void }) {
+  const [open, setOpen] = useState(false)
+  const [reason, setReason] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState('')
+  const toast = useToast()
+
+  async function confirm() {
+    setBusy(true)
+    setError('')
+    const { error } = await supabase.rpc('cancel_my_order', { p_order_id: order.id, p_reason: reason.trim() || null })
+    if (error) {
+      setBusy(false)
+      return setError(friendlyError(error))
+    }
+    await requestStatusEmail(order.id)
+    setBusy(false)
+    setOpen(false)
+    toast('success', `Cancelaste el pedido ${order.order_number}.`)
+    onCancelled()
+  }
+
+  if (!open)
+    return (
+      <button className="btn-outline w-full text-bad" onClick={() => setOpen(true)}>
+        <XCircle className="size-4" /> Cancelar pedido
+      </button>
+    )
+
+  return (
+    <section className="card space-y-3 p-5" aria-label="Cancelar pedido">
+      <h2 className="font-extrabold">¿Querés cancelar el pedido?</h2>
+      <p className="text-sm text-ink-2">Lo podés cancelar porque todavía no empezamos a prepararlo. Te vamos a enviar un correo con la confirmación.</p>
+      <TextAreaField label="Motivo (opcional)" name="reason" value={reason} onChange={(e) => setReason(e.target.value)} maxLength={300} />
+      {error && <Alert tone="error">{error}</Alert>}
+      <div className="flex gap-2">
+        <button className="btn-outline flex-1" onClick={() => setOpen(false)} disabled={busy}>
+          Volver
+        </button>
+        <button className="btn-danger flex-1" onClick={confirm} disabled={busy}>
+          {busy ? <Spinner className="size-5 text-white" /> : 'Sí, cancelar'}
+        </button>
+      </div>
+    </section>
+  )
+}
+
 export function MyOrderDetail() {
   const { id } = useParams()
   const [order, setOrder] = useState<Order | null | undefined>(undefined)
   const reorder = useReorder()
 
-  useEffect(() => {
-    supabase
-      .from('orders')
-      .select(ORDER_SELECT)
-      .eq('id', id!)
-      .maybeSingle()
-      .then(({ data }) => setOrder((data as Order) ?? null))
+  const load = useCallback(async () => {
+    const { data } = await supabase.from('orders').select(ORDER_SELECT).eq('id', id!).maybeSingle()
+    setOrder((data as Order) ?? null)
   }, [id])
+
+  useEffect(() => {
+    load()
+  }, [load])
 
   if (order === undefined) return <PageLoader />
   if (!order) return <EmptyState icon={<Package className="size-8" />} title="No encontramos el pedido" action={<Link to="/mis-pedidos" className="btn-primary">Ver mis pedidos</Link>} />
@@ -157,6 +205,7 @@ export function MyOrderDetail() {
           <button className="btn-primary w-full" onClick={() => reorder(order)}>
             <RotateCcw className="size-4" /> Volver a comprar
           </button>
+          {customerCanCancel(order.status, order.payment_status) && <CancelOrder order={order} onCancelled={load} />}
         </aside>
       </div>
     </div>
