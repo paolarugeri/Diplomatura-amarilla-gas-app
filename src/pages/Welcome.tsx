@@ -104,9 +104,7 @@ export default function Welcome() {
 
         <div className="relative mx-auto grid max-w-6xl items-center gap-4 px-5 pb-20 pt-4 md:grid-cols-[1.05fr_1fr] md:gap-10 md:pb-32 md:pt-10">
           <div className="text-center md:text-left">
-            <div className="mx-auto w-fit rounded-3xl bg-white px-5 py-3 shadow-card md:mx-0 md:px-6 md:py-4">
-              <Logo className="h-11 md:h-20" />
-            </div>
+            <Logo className="mx-auto h-14 md:mx-0 md:h-24" />
             <h1 className="mt-4 text-[30px] md:mt-6 font-extrabold leading-[1.05] text-ink md:text-[46px] lg:text-[56px]">
               Tu gas, en tu casa,
               <br />

@@ -2,15 +2,7 @@ import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-do
 import { LayoutDashboard, LogIn, LogOut, Package, ShoppingCart, Store, Truck, User } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { useCart } from '../context/CartContext'
-
-function Wordmark() {
-  return (
-    <span className="font-display text-[20px] leading-none tracking-tight text-ink" aria-label="Amarilla Gas">
-      <b className="font-extrabold">AMARILLA</b>
-      <span className="font-medium">GAS</span>
-    </span>
-  )
-}
+import { LogoHorizontal } from './Logo'
 
 export function Layout() {
   const { session, isAdmin, isDriver, signOut } = useAuth()
@@ -26,7 +18,7 @@ export function Layout() {
       <header className="no-print sticky top-0 z-[1000] bg-brand shadow-sm">
         <div className="mx-auto flex h-14 max-w-6xl items-center gap-3 px-4">
           <Link to={session ? '/catalogo' : '/'} className="shrink-0">
-            <Wordmark />
+            <LogoHorizontal className="h-7 md:h-8" />
           </Link>
           <nav className="ml-6 hidden items-center gap-1 md:flex" aria-label="Principal">
             <NavLink to="/catalogo" className={desktopLink}>

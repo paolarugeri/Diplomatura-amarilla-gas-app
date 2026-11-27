@@ -11,9 +11,7 @@ export function AuthShell({ title, subtitle, children, footer }: { title: string
           <ChevronLeft className="size-4" /> Inicio
         </Link>
         <div className="mt-3 flex justify-center">
-          <div className="rounded-2xl bg-white px-5 py-3 shadow-card">
-            <Logo className="h-12" />
-          </div>
+          <Logo className="h-14" />
         </div>
       </div>
       <div className="min-h-[calc(100dvh-150px)] rounded-t-[28px] bg-white px-5 pb-10 pt-7 md:min-h-0 md:w-full md:max-w-md md:rounded-3xl md:p-8 md:shadow-xl">
