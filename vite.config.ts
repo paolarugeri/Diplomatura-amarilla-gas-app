@@ -9,7 +9,7 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.png', 'icons/apple-touch-icon.png', 'img/*.png'],
+      includeAssets: ['favicon.svg', 'favicon.png', 'icons/apple-touch-icon.png', 'img/*.png', 'img/*.svg'],
       manifest: {
         name: 'Amarilla Gas · Pedidos online',
         short_name: 'Amarilla Gas',
