@@ -93,3 +93,30 @@ h1, h2, h3, h4 {
 @media print {
   .no-print { display: none !important; }
 }
+
+/* Logo animado de la bienvenida: la llama titila y la garrafa se mueve con la escena (ver Welcome.tsx) */
+.logo-animado svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+.logo-animado .logo-mark {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  will-change: transform;
+}
+.logo-animado .logo-flame {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  animation: llama 1.6s ease-in-out infinite;
+}
+@keyframes llama {
+  0%, 100% { transform: scale(1, 1) skewX(0deg); }
+  20% { transform: scale(0.94, 1.08) skewX(-3deg); }
+  45% { transform: scale(1.04, 0.95) skewX(2deg); }
+  70% { transform: scale(0.97, 1.05) skewX(-1.5deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .logo-animado .logo-flame { animation: none; }
+}
