@@ -6,6 +6,8 @@ import { Alert, Field, Spinner } from '../../components/ui'
 import { friendlyError, supabase } from '../../lib/supabase'
 import { validateEmail } from '../../lib/validation'
 import { useToast } from '../../context/ToastContext'
+import { canVisit, homeFor } from '../../lib/home'
+import type { Role } from '../../lib/types'
 
 export default function Login() {
   const navigate = useNavigate()
@@ -36,9 +38,10 @@ export default function Login() {
     const { count } = await supabase.from('addresses').select('id', { count: 'exact', head: true }).eq('user_id', data.user.id)
     setBusy(false)
     toast('success', `¡Hola, ${profile?.full_name?.split(' ')[0] ?? ''}!`)
-    if (from && from !== '/ingresar') navigate(from, { replace: true })
-    else if (profile?.role === 'admin') navigate('/admin', { replace: true })
-    else if (profile?.role === 'repartidor') navigate('/reparto', { replace: true })
+    const role = profile?.role as Role | undefined
+    // Volver a la página anterior solo si ese perfil puede verla; si no, a su pantalla de inicio
+    if (from && from !== '/ingresar' && from !== '/' && canVisit(from.split('?')[0], role)) navigate(from, { replace: true })
+    else if (role === 'admin' || role === 'repartidor') navigate(homeFor(role), { replace: true })
     else if (!count) navigate('/domicilios/nuevo?primero=1', { replace: true })
     else navigate('/catalogo', { replace: true })
   }

@@ -1,9 +1,9 @@
 import type { ReactNode } from 'react'
 import { Navigate, useLocation } from 'react-router-dom'
-import { ShieldAlert } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
-import { EmptyState, PageLoader } from './ui'
+import { PageLoader } from './ui'
 import type { Role } from '../lib/types'
+import { homeFor } from '../lib/home'
 
 export function RequireAuth({ children }: { children: ReactNode }) {
   const { session, loading } = useAuth()
@@ -22,16 +22,8 @@ function RequireRole({ role, children }: { role: Role; children: ReactNode }) {
   const location = useLocation()
   if (loading || (session && !profile)) return <PageLoader />
   if (!session) return <Navigate to="/ingresar" replace state={{ from: location.pathname }} />
-  if (profile?.role !== role)
-    return (
-      <div className="mx-auto max-w-lg p-6">
-        <EmptyState
-          icon={<ShieldAlert className="size-8" />}
-          title="Acceso restringido"
-          text="Esta sección es exclusiva para el personal autorizado de Amarilla Gas."
-        />
-      </div>
-    )
+  // Un usuario con otro perfil (por ejemplo, un cliente que llega a /admin) va a su pantalla de inicio
+  if (profile && profile.role !== role) return <Navigate to={homeFor(profile.role)} replace />
   return <>{children}</>
 }
 

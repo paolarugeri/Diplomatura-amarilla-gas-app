@@ -2,10 +2,13 @@ import { Link, Navigate } from 'react-router-dom'
 import { Clock, ShieldCheck, Truck, ChevronRight } from 'lucide-react'
 import { Logo } from '../components/Logo'
 import { useAuth } from '../context/AuthContext'
+import { PageLoader } from '../components/ui'
+import { homeFor } from '../lib/home'
 
 export default function Welcome() {
-  const { session, loading } = useAuth()
-  if (!loading && session) return <Navigate to="/catalogo" replace />
+  const { session, profile, loading } = useAuth()
+  if (!loading && session && !profile) return <PageLoader />
+  if (!loading && session) return <Navigate to={homeFor(profile?.role)} replace />
 
   return (
     <div className="relative min-h-dvh overflow-hidden bg-brand">
