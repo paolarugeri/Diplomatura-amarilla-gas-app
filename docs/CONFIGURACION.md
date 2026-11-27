@@ -63,6 +63,8 @@ El correo lo envía la Edge Function `order-confirmation-email`. Soporta dos pro
 
 En ambos casos cargá también `APP_URL` con la dirección pública de la app (para el logo y el botón “Seguir mi pedido”).
 
+**Destinatario de la confirmación.** Por defecto el correo va al email del cliente. Si cargás el secreto `EMAIL_TO` (por ejemplo `EMAIL_TO=diplomaturaiaub@gmail.com`), todas las confirmaciones se envían a esa dirección. Sirve para la demo y para Resend sin dominio verificado, que solo deja enviar al correo con el que te registraste. Para volver a enviar a cada cliente: `npx supabase secrets unset EMAIL_TO`.
+
 Desplegar las funciones y cargar los secretos:
 
 ```bash
@@ -117,4 +119,5 @@ En **Panel → Productos** se crean y editan productos, se cambian precios e im�
 | Netlify/Vercel | `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` | Conexión pública del frontend |
 | Supabase secrets | `APP_URL` | Enlaces del correo y retorno de Mercado Pago |
 | Supabase secrets | `RESEND_API_KEY` **o** `SMTP_*` + `EMAIL_FROM` | Envío de correos |
+| Supabase secrets | `EMAIL_TO` (opcional) | Enviar todas las confirmaciones a una sola dirección |
 | Supabase secrets | `MP_ACCESS_TOKEN`, `MP_WEBHOOK_SECRET` | Mercado Pago |
