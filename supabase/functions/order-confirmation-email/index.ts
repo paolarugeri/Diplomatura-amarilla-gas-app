@@ -10,6 +10,9 @@
 //     * SMTP, por ejemplo Gmail (SMTP_HOST, ...)    -> alternativa sencilla
 //     * Mailpit (MAILPIT_URL)                       -> solo desarrollo local: buzón de prueba de Supabase
 //   Si no hay ninguno configurado, lo registra como "no_configurado" y no simula el envío.
+// - Avisos internos para el negocio (a ADMIN_EMAIL o, si no está, a SMTP_USER):
+//     * pedido nuevo, junto con la confirmación al cliente
+//     * cancelación hecha por el cliente, con el motivo
 import { adminClient, appUrl, corsHeaders, dateTime, escapeHtml, json, money, userClient } from '../_shared/common.ts'
 
 interface Item {
@@ -46,7 +49,7 @@ function addressText(order: Order) {
 }
 
 /** Estructura común de todos los correos (encabezado con logo, número de pedido, botón y pie). */
-function layout(order: Order, opts: { title: string; intro: string; body: string; footer: string }) {
+function layout(order: Order, opts: { title: string; intro: string; body: string; footer: string; buttonUrl?: string; buttonText?: string }) {
   const url = appUrl()
   return `<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>Pedido ${order.order_number}</title></head>
 <body style="margin:0;background:#f6f5f1;font-family:Montserrat,Arial,Helvetica,sans-serif;color:#1f1f1c">
@@ -69,8 +72,8 @@ function layout(order: Order, opts: { title: string; intro: string; body: string
   </td></tr>
   ${opts.body}
   <tr><td style="padding:20px 24px" align="center">
-    <a href="${url}/mis-pedidos/${order.id}" style="display:inline-block;background:#1f1f1c;color:#ffffff;text-decoration:none;font-weight:700;padding:13px 22px;border-radius:12px;font-size:15px">Seguir mi pedido</a>
-    <p style="margin:18px 0 0;font-size:15px;font-weight:700">¡Gracias por confiar en nosotros!</p>
+    <a href="${opts.buttonUrl ?? `${url}/mis-pedidos/${order.id}`}" style="display:inline-block;background:#1f1f1c;color:#ffffff;text-decoration:none;font-weight:700;padding:13px 22px;border-radius:12px;font-size:15px">${opts.buttonText ?? 'Seguir mi pedido'}</a>
+    ${opts.buttonUrl ? '' : '<p style="margin:18px 0 0;font-size:15px;font-weight:700">¡Gracias por confiar en nosotros!</p>'}
   </td></tr>
   <tr><td style="background:#1f1f1c;color:#d6d4cc;padding:16px 24px;font-size:12px" align="center">
     Amarilla Gas · Comercialización, fraccionamiento y distribución de GLP<br>${opts.footer}
@@ -257,10 +260,86 @@ async function send(to: string, mail: { html: string; text: string; subject: str
 
 const configured = () => Boolean(Deno.env.get('RESEND_API_KEY') || Deno.env.get('MAILPIT_URL') || Deno.env.get('SMTP_HOST'))
 
+/** Correo interno del negocio: ADMIN_EMAIL o, si no está, la cuenta que envía los correos (SMTP_USER). */
+const businessEmail = () => (Deno.env.get('ADMIN_EMAIL') || Deno.env.get('SMTP_USER') || '').trim()
+
+/** Aviso interno para el negocio: pedido nuevo o cancelación hecha por el cliente. */
+function renderBusinessEmail(order: Order, items: Item[], type: 'pedido' | 'cancelado', reason: string | null) {
+  const a = order.delivery_address
+  const rows = items.map((i) => `<li>${i.quantity} × ${escapeHtml(itemName(i))} · ${money(i.subtotal)}</li>`).join('')
+  const isNew = type === 'pedido'
+  const comment = isNew ? order.notes : reason
+  const html = layout(order, {
+    title: isNew ? 'Nuevo pedido recibido' : 'Un cliente canceló su pedido',
+    intro: `<p style="margin:10px 0 0;font-size:15px;line-height:1.5"><b>${escapeHtml(order.customer_name)}</b> ${isNew ? 'hizo un pedido nuevo desde la app.' : 'canceló su pedido desde la app.'}</p>
+    ${comment ? `<p style="margin:12px 0 0;padding:12px;background:#fff8e8;border-radius:10px;font-size:14px;color:#77560d"><b>${isNew ? 'Comentario del cliente' : 'Motivo de la cancelación'}:</b> ${escapeHtml(comment)}</p>` : isNew ? '' : '<p style="margin:12px 0 0;font-size:14px;color:#6b6a64">El cliente no indicó un motivo.</p>'}`,
+    body: `<tr><td style="padding:0 24px;font-size:14px;line-height:1.6">
+    <b>Cliente:</b> ${escapeHtml(order.customer_name)} · ${escapeHtml(order.customer_phone)} · ${escapeHtml(order.customer_email)}<br>
+    <b>Domicilio:</b> ${escapeHtml(addressText(order))}${a.reference ? ` (${escapeHtml(a.reference)})` : ''}<br>
+    <b>Pago:</b> ${methodLabel[order.payment_method] ?? order.payment_method} · ${payLabel[order.payment_status] ?? order.payment_status}<br>
+    <b>Total:</b> ${money(order.total)}
+    <ul style="margin:8px 0 0;padding-left:18px">${rows}</ul>
+  </td></tr>`,
+    footer: 'Aviso interno generado automáticamente por la app.',
+    buttonUrl: `${appUrl()}/admin/pedidos`,
+    buttonText: 'Ver en el panel',
+  })
+  const text = [
+    isNew ? 'Nuevo pedido recibido' : 'Un cliente canceló su pedido',
+    `Pedido: ${order.order_number} · ${dateTime(order.created_at)}`,
+    `Cliente: ${order.customer_name} · ${order.customer_phone} · ${order.customer_email}`,
+    `Domicilio: ${addressText(order)}`,
+    ...items.map((i) => `- ${i.quantity} x ${itemName(i)} = ${money(i.subtotal)}`),
+    `Total: ${money(order.total)} · ${methodLabel[order.payment_method]}`,
+    comment ? `${isNew ? 'Comentario' : 'Motivo'}: ${comment}` : '',
+  ].filter(Boolean).join('\n')
+  const subject = isNew
+    ? `Nuevo pedido ${order.order_number} · ${order.customer_name} · ${money(order.total)}`
+    : `Pedido ${order.order_number} cancelado por el cliente`
+  return { html, text, subject: `Amarilla Gas · ${subject}` }
+}
+
 /** Quien llama con la clave de servicio es otra función del servidor (por ejemplo, el aviso de Mercado Pago). */
 function isServiceCall(req: Request) {
   const key = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
   return Boolean(key) && req.headers.get('Authorization') === `Bearer ${key}`
+}
+
+type Mail = { html: string; text: string; subject: string }
+
+/** Envía un correo una sola vez por pedido y tipo, y deja registro en email_notifications. */
+async function sendOnce(db: ReturnType<typeof adminClient>, orderId: string, kind: string, to: string, build: () => Mail | Promise<Mail>) {
+  const { data: prev } = await db
+    .from('email_notifications')
+    .select('status')
+    .eq('order_id', orderId)
+    .eq('kind', kind)
+    .order('created_at', { ascending: false })
+    .limit(1)
+  if (prev?.[0]?.status === 'enviado') return { status: 'enviado', kind, repeated: true }
+
+  if (!configured()) {
+    if (prev?.[0]?.status !== 'no_configurado') {
+      await db.from('email_notifications').insert({
+        order_id: orderId,
+        kind,
+        to_email: to,
+        status: 'no_configurado',
+        error: 'No hay proveedor de correo configurado (RESEND_API_KEY o SMTP_HOST).',
+      })
+    }
+    return { status: 'no_configurado', kind }
+  }
+
+  try {
+    const { id } = await send(to, await build())
+    await db.from('email_notifications').insert({ order_id: orderId, kind, to_email: to, status: 'enviado', provider_message_id: id ?? null })
+    return { status: 'enviado', kind }
+  } catch (e) {
+    console.error('Error enviando correo', kind, e)
+    await db.from('email_notifications').insert({ order_id: orderId, kind, to_email: to, status: 'error', error: String(e).slice(0, 500) })
+    return { status: 'error', kind }
+  }
 }
 
 Deno.serve(async (req) => {
@@ -280,54 +359,30 @@ Deno.serve(async (req) => {
   const db = adminClient()
   const { data: order } = await db.from('orders').select('*, order_items(*)').eq('id', order_id).single()
   if (!order) return json({ error: 'Pedido no encontrado' }, 404)
+  const items = order.order_items as Item[]
+  const business = businessEmail()
 
-  // 2) Qué correo corresponde
-  if (isStatus && !STATUS_NOTICES[order.status]) return json({ status: 'sin_aviso' })
-  const kind = isStatus ? `estado_${order.status}` : 'confirmacion_pedido'
+  // 2) Confirmación al cliente + aviso de pedido nuevo al negocio
+  if (!isStatus) {
+    const result = await sendOnce(db, order_id, 'confirmacion_pedido', order.customer_email, () => renderEmail(order, items))
+    if (business) await sendOnce(db, order_id, 'empresa_pedido_nuevo', business, () => renderBusinessEmail(order, items, 'pedido', null))
+    return json(result, result.status === 'error' ? 502 : 200)
+  }
 
-  // 3) Idempotencia: cada correo se envía una sola vez
-  const { data: prev } = await db
-    .from('email_notifications')
-    .select('status')
+  // 3) Aviso del estado actual al cliente (+ aviso al negocio si el cliente canceló)
+  if (!STATUS_NOTICES[order.status]) return json({ status: 'sin_aviso' })
+  const { data: last } = await db
+    .from('order_status_history')
+    .select('source, note')
     .eq('order_id', order_id)
-    .eq('kind', kind)
+    .eq('status', order.status)
     .order('created_at', { ascending: false })
     .limit(1)
-  if (prev?.[0]?.status === 'enviado') return json({ status: 'enviado', kind, repeated: true })
-
-  if (!configured()) {
-    if (prev?.[0]?.status !== 'no_configurado') {
-      await db.from('email_notifications').insert({
-        order_id,
-        kind,
-        to_email: order.customer_email,
-        status: 'no_configurado',
-        error: 'No hay proveedor de correo configurado (RESEND_API_KEY o SMTP_HOST).',
-      })
-    }
-    return json({ status: 'no_configurado', kind })
+  const byCustomer = last?.[0]?.source === 'cliente'
+  const result = await sendOnce(db, order_id, `estado_${order.status}`, order.customer_email, () => renderStatusEmail(order, byCustomer))
+  if (order.status === 'cancelado' && byCustomer && business) {
+    const reason = (last?.[0]?.note ?? '').replace(/^Cancelado por el cliente:?\s*/, '').trim() || null
+    await sendOnce(db, order_id, 'empresa_cancelado_cliente', business, () => renderBusinessEmail(order, items, 'cancelado', reason))
   }
-
-  try {
-    let mail
-    if (isStatus) {
-      const { data: last } = await db
-        .from('order_status_history')
-        .select('source')
-        .eq('order_id', order_id)
-        .eq('status', order.status)
-        .order('created_at', { ascending: false })
-        .limit(1)
-      mail = renderStatusEmail(order, last?.[0]?.source === 'cliente')
-    } else {
-      mail = renderEmail(order, order.order_items as Item[])
-    }
-    const { id } = await send(order.customer_email, mail)
-    await db.from('email_notifications').insert({ order_id, kind, to_email: order.customer_email, status: 'enviado', provider_message_id: id ?? null })
-    return json({ status: 'enviado', kind })
-  } catch (e) {
-    console.error('Error enviando correo', e)
-    await db.from('email_notifications').insert({ order_id, kind, to_email: order.customer_email, status: 'error', error: String(e).slice(0, 500) })
-    return json({ status: 'error', kind }, 502)
-  }
+  return json(result, result.status === 'error' ? 502 : 200)
 })

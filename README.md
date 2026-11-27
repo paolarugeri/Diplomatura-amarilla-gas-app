@@ -15,7 +15,7 @@ El cliente se registra, carga su domicilio, elige productos, paga en efectivo co
 | Carrito | Agregar, cambiar cantidades, eliminar, combinar productos, unitario, subtotal y total |
 | Compra | Confirmación de domicilio, medio de pago, comentarios, pantalla de confirmación con número de pedido |
 | Pagos | Efectivo contra entrega (pendiente hasta el cobro) y Mercado Pago Checkout Pro (confirmado solo por la pasarela) |
-| Correo | Confirmación automática y aviso en cada cambio de estado (en preparación, en camino, entregado, cancelado), con diseño institucional (Resend o SMTP) |
+| Correo | Confirmación automática y aviso en cada cambio de estado (en preparación, en camino, entregado, cancelado), con diseño institucional (Resend o SMTP); avisos internos al negocio por pedidos nuevos y cancelaciones |
 | Mis pedidos | Historial, detalle, seguimiento por estados, “Volver a comprar” y cancelación del pedido mientras no se empezó a preparar |
 | Panel | Indicadores, pedidos con búsqueda y filtros, entregas, productos y precios, clientes, configuración |
 | PWA | Instalable en Android/iPhone, con íconos y manifiesto |
@@ -75,7 +75,7 @@ npm run db:reset
 SUPABASE_ANON_KEY=<clave anon local> npm run test:circuito
 ```
 
-17 pruebas automáticas recorren el circuito completo: precios de todas las combinaciones, pedidos combinados, idempotencia y bloqueo de duplicados, validaciones, permisos por rol, flujo de entrega con cobro en efectivo, reglas de Mercado Pago, conservación del precio histórico, productos desactivados, cancelación por el cliente, correo de confirmación, avisos de cambio de estado e indicadores.
+18 pruebas automáticas recorren el circuito completo: precios de todas las combinaciones, pedidos combinados, idempotencia y bloqueo de duplicados, validaciones, permisos por rol, flujo de entrega con cobro en efectivo, reglas de Mercado Pago, conservación del precio histórico, productos desactivados, cancelación por el cliente, correo de confirmación, avisos de cambio de estado e indicadores.
 
 ## Estructura
 
