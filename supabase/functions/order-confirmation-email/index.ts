@@ -6,9 +6,6 @@
 //     * SMTP, por ejemplo Gmail (SMTP_HOST, ...)    -> alternativa sencilla
 //     * Mailpit (MAILPIT_URL)                       -> solo desarrollo local: buzón de prueba de Supabase
 //   Si no hay ninguno configurado, lo registra como "no_configurado" y no simula el envío.
-// - Destinatario: por defecto, el correo del cliente. Si se define EMAIL_TO, todas las
-//   confirmaciones se envían a esa dirección (útil para demos o cuando el proveedor solo
-//   permite enviar a una cuenta verificada).
 import { adminClient, appUrl, corsHeaders, dateTime, escapeHtml, json, money, userClient } from '../_shared/common.ts'
 
 interface Item {
@@ -169,9 +166,6 @@ async function send(to: string, mail: { html: string; text: string; subject: str
   return { id: info.messageId }
 }
 
-/** Dirección a la que se envía la confirmación: EMAIL_TO si está definida, si no el correo del cliente. */
-const recipient = (customerEmail: string) => Deno.env.get('EMAIL_TO')?.trim() || customerEmail
-
 const configured = () => Boolean(Deno.env.get('RESEND_API_KEY') || Deno.env.get('MAILPIT_URL') || Deno.env.get('SMTP_HOST'))
 
 Deno.serve(async (req) => {
@@ -199,13 +193,12 @@ Deno.serve(async (req) => {
 
   const { data: order } = await db.from('orders').select('*, order_items(*)').eq('id', order_id).single()
   if (!order) return json({ error: 'Pedido no encontrado' }, 404)
-  const to = recipient(order.customer_email)
 
   if (!configured()) {
     if (prev?.[0]?.status !== 'no_configurado') {
       await db.from('email_notifications').insert({
         order_id,
-        to_email: to,
+        to_email: order.customer_email,
         status: 'no_configurado',
         error: 'No hay proveedor de correo configurado (RESEND_API_KEY o SMTP_HOST).',
       })
@@ -215,12 +208,12 @@ Deno.serve(async (req) => {
 
   try {
     const mail = renderEmail(order, order.order_items as Item[])
-    const { id } = await send(to, mail)
-    await db.from('email_notifications').insert({ order_id, to_email: to, status: 'enviado', provider_message_id: id ?? null })
+    const { id } = await send(order.customer_email, mail)
+    await db.from('email_notifications').insert({ order_id, to_email: order.customer_email, status: 'enviado', provider_message_id: id ?? null })
     return json({ status: 'enviado' })
   } catch (e) {
     console.error('Error enviando correo', e)
-    await db.from('email_notifications').insert({ order_id, to_email: to, status: 'error', error: String(e).slice(0, 500) })
+    await db.from('email_notifications').insert({ order_id, to_email: order.customer_email, status: 'error', error: String(e).slice(0, 500) })
     return json({ status: 'error' }, 502)
   }
 })
