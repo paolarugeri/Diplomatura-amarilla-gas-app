@@ -72,3 +72,14 @@ files={
  'icono-maskable.svg': icon_full(v['fn'],(INK,Y,W),Y,0.5),
 }
 for n,s in files.items(): open(f'{A}/{n}','w').write(s)
+
+# ---- logo vertical animable para la bienvenida (garrafa y llama en grupos con clase)
+def mark2_anim(h, body_c, fl_c, in_c):
+    g,w,hh=mark2(h, body_c, fl_c, in_c)
+    i=g.index('<g transform="translate(')
+    return (g[:i]+'<g class="logo-flame">'+g[i:]+'</g>', w, hh)
+m,mw,_=mark2_anim(150,*v['onY']); cap=T.capheight('800',100); _,ww=word(100,*v['wY']); gap=38
+wsvg,_=word(100,*v['wY'],x=0,base=150+gap+cap)
+anim=(f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -12 {ww:.1f} {150+gap+cap+12:.1f}" role="img" aria-label="Amarilla Gas">'
+      f'<g transform="translate({(ww-mw)/2:.1f} 0)"><g class="logo-mark">{m}</g></g>{wsvg}</svg>')
+os.makedirs('../../src/assets',exist_ok=True); open('../../src/assets/logo-animado.svg','w').write(anim)

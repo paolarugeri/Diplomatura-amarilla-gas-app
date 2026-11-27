@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { Link, Navigate } from 'react-router-dom'
 import { ArrowRight, ChevronDown, ChevronRight, Clock, MapPin, ShieldCheck, ShoppingCart, Sparkles, Truck } from 'lucide-react'
-import { Logo } from '../components/Logo'
+import logoAnimado from '../assets/logo-animado.svg?raw'
 import { useAuth } from '../context/AuthContext'
 import { PageLoader } from '../components/ui'
 import { homeFor } from '../lib/home'
@@ -21,6 +21,7 @@ function useScrollGarrafa() {
   const chapa = useRef<HTMLImageElement>(null)
   const seal = useRef<HTMLDivElement>(null)
   const glow = useRef<HTMLDivElement>(null)
+  const logo = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return
@@ -28,6 +29,7 @@ function useScrollGarrafa() {
     let lastY = window.scrollY
     let tilt = 0
     let push = 0 // impulso extra de la rueda cuando la página no se puede desplazar más
+    let logoMark: SVGGElement | null | undefined
 
     const frame = () => {
       const y = window.scrollY
@@ -49,6 +51,9 @@ function useScrollGarrafa() {
         chapa.current.style.filter = `grayscale(${p * 0.8}) blur(${p * 1.5}px)`
       }
       if (seal.current) seal.current.style.transform = `rotate(${-12 + y * 0.25 + tilt}deg) scale(${1 + Math.abs(tilt) / 80})`
+      // la garrafa del logo flota y se inclina al mismo ritmo que las garrafas de la escena
+      logoMark ??= logo.current?.querySelector<SVGGElement>('.logo-mark')
+      if (logoMark) logoMark.style.transform = `translateY(${Math.sin(t * 1.6) * 4}px) rotate(${tilt * 0.8}deg)`
       if (glow.current) glow.current.style.transform = `scale(${1 + p * 0.25 + Math.sin(t * 2) * 0.03})`
       raf = requestAnimationFrame(frame)
     }
@@ -64,7 +69,7 @@ function useScrollGarrafa() {
     }
   }, [])
 
-  return { stage, plastic, chapa, seal, glow }
+  return { stage, plastic, chapa, seal, glow, logo }
 }
 
 function PromoTopBar() {
@@ -104,7 +109,11 @@ export default function Welcome() {
 
         <div className="relative mx-auto grid max-w-6xl items-center gap-4 px-5 pb-20 pt-4 md:grid-cols-[1.05fr_1fr] md:gap-10 md:pb-32 md:pt-10">
           <div className="text-center md:text-left">
-            <Logo className="mx-auto h-14 md:mx-0 md:h-24" />
+            <div
+              ref={g.logo}
+              className="logo-animado mx-auto w-[240px] md:mx-0 md:w-[320px]"
+              dangerouslySetInnerHTML={{ __html: logoAnimado }}
+            />
             <h1 className="mt-4 text-[30px] md:mt-6 font-extrabold leading-[1.05] text-ink md:text-[46px] lg:text-[56px]">
               Tu gas, en tu casa,
               <br />
