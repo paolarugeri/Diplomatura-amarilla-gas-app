@@ -6,6 +6,15 @@ import { ORDER_STATUSES, formatDateTime, orderStatusLabel, paymentStatusLabel } 
 import { ORDER_SELECT, OrderFacts, OrderItemsTable } from '../../components/OrderParts'
 import { Alert, PageLoader, SelectField, Spinner, StatusBadge, TextAreaField } from '../../components/ui'
 import { useToast } from '../../context/ToastContext'
+import { requestStatusEmail } from '../../lib/hooks'
+
+function emailKindLabel(kind?: string) {
+  if (!kind || kind === 'confirmacion_pedido') return 'Correo de confirmación'
+  if (kind === 'empresa_pedido_nuevo') return 'Aviso interno de pedido nuevo'
+  if (kind === 'empresa_cancelado_cliente') return 'Aviso interno de cancelación'
+  const status = kind.replace(/^estado_/, '') as OrderStatus
+  return `Aviso “${orderStatusLabel[status] ?? status}”`
+}
 
 const sourceLabel = { cliente: 'Cliente', admin: 'Empresa', pasarela: 'Mercado Pago', sistema: 'Sistema' }
 
@@ -50,6 +59,7 @@ export function AdminOrderPanel({ orderId, onClose, onChanged }: { orderId: stri
     if (error) return setError(friendlyError(error))
     toast('success', `Pedido ${order.order_number} actualizado.`)
     setNote('')
+    await requestStatusEmail(order.id)
     await load()
     onChanged()
   }
@@ -151,9 +161,9 @@ export function AdminOrderPanel({ orderId, onClose, onChanged }: { orderId: stri
                       </li>
                     ))}
                 </ol>
-                {(order.email_notifications ?? []).map((m, i) => (
+                {[...(order.email_notifications ?? [])].sort((a, b) => a.created_at.localeCompare(b.created_at)).map((m, i) => (
                   <p key={i} className="mt-3 text-xs text-muted">
-                    Correo de confirmación: <b>{m.status === 'enviado' ? 'enviado' : m.status === 'no_configurado' ? 'servicio no configurado' : 'error'}</b> ({formatDateTime(m.created_at)})
+                    {emailKindLabel(m.kind)}: <b>{m.status === 'enviado' ? 'enviado' : m.status === 'no_configurado' ? 'servicio no configurado' : 'error'}</b> ({formatDateTime(m.created_at)})
                   </p>
                 ))}
               </section>
