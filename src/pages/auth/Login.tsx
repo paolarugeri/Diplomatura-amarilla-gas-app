@@ -7,6 +7,7 @@ import { friendlyError, supabase } from '../../lib/supabase'
 import { validateEmail } from '../../lib/validation'
 import { useToast } from '../../context/ToastContext'
 import { canVisit, homeFor } from '../../lib/home'
+import { PromoBanner } from '../../components/PromoBanner'
 import type { Role } from '../../lib/types'
 
 export default function Login() {
@@ -98,6 +99,7 @@ export default function Login() {
           {busy ? <Spinner className="size-5 text-ink" /> : 'Ingresar'}
         </button>
       </form>
+      <PromoBanner variant="cinta" dismissible={false} className="mt-6" />
     </AuthShell>
   )
 }

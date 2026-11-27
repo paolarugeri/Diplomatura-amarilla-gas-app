@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { ArrowRight, Phone, Sparkles, X } from 'lucide-react'
 
 /**
@@ -55,23 +56,45 @@ const Swap = ({ size = 'size-16 md:size-20' }: { size?: string }) => (
   </div>
 )
 
-export function PromoBanner({ variant = 'valla' }: { variant?: PromoVariant }) {
-  const [hidden, close] = useDismiss()
+/**
+ * - dismissible: muestra la X para cerrarla (en el catálogo). En la bienvenida y el inicio de sesión queda fija.
+ * - signup: el botón invita a registrarse en lugar de llamar (para quien todavía no tiene cuenta).
+ */
+export function PromoBanner({ variant = 'valla', dismissible = true, signup = false, className = '' }: { variant?: PromoVariant; dismissible?: boolean; signup?: boolean; className?: string }) {
+  const [hiddenSaved, closeSaved] = useDismiss()
+  const hidden = dismissible && hiddenSaved
+  const close = closeSaved
   if (hidden) return null
+  const cta = (cls: string, label: string) =>
+    signup ? (
+      <Link to="/registro" className={cls}>
+        <ArrowRight className="size-4" /> Registrate y aprovechala
+      </Link>
+    ) : (
+      <a href={TEL} className={cls}>
+        <Phone className="size-4" /> {label}
+      </a>
+    )
 
   if (variant === 'cinta')
     return (
-      <section aria-label="Promoción" className="relative mb-4 overflow-hidden rounded-xl bg-ink py-2.5 pl-4 pr-11 text-white">
+      <section aria-label="Promoción" className={`relative overflow-hidden rounded-xl bg-ink py-2.5 pl-4 ${dismissible ? 'pr-11' : 'pr-4'} text-white ${className || 'mb-4'}`}>
         <p className="flex flex-wrap items-center gap-x-2 text-sm">
           <Sparkles className="size-4 text-brand" />
           <b className="font-display text-brand">PROMO CANJE</b>
           <span>Tu garrafa de chapa 10 kg por una plástica pagando solo la diferencia:</span>
           <b className="font-display text-base text-brand">{PRICE}</b>
-          <a href={TEL} className="font-bold underline underline-offset-2">
-            Pedila
-          </a>
+          {signup ? (
+            <Link to="/registro" className="font-bold underline underline-offset-2">
+              Registrate
+            </Link>
+          ) : (
+            <a href={TEL} className="font-bold underline underline-offset-2">
+              Pedila
+            </a>
+          )}
         </p>
-        <CloseBtn onClick={close} dark />
+        {dismissible && <CloseBtn onClick={close} dark />}
       </section>
     )
 
@@ -79,10 +102,10 @@ export function PromoBanner({ variant = 'valla' }: { variant?: PromoVariant }) {
     return (
       <section
         aria-label="Promoción"
-        className="relative mb-5 overflow-hidden rounded-2xl bg-brand p-5 shadow-card"
+        className={`relative overflow-hidden rounded-2xl bg-brand p-5 shadow-card ${className || 'mb-5'}`}
         style={{ backgroundImage: 'repeating-linear-gradient(135deg, rgba(31,31,28,0.06) 0 14px, transparent 14px 28px)' }}
       >
-        <CloseBtn onClick={close} />
+        {dismissible && <CloseBtn onClick={close} />}
         <div className="flex flex-col items-center gap-4 sm:flex-row">
           <div className="flex-1 text-center sm:text-left">
             <span className="chip bg-ink text-brand">Promo de bienvenida</span>
@@ -104,18 +127,16 @@ export function PromoBanner({ variant = 'valla' }: { variant?: PromoVariant }) {
             </span>
           </div>
         </div>
-        <a href={TEL} className="btn-dark mt-4 w-full sm:w-auto">
-          <Phone className="size-4" /> Quiero canjear mi envase
-        </a>
+        {cta('btn-dark mt-4 w-full sm:w-auto', 'Quiero canjear mi envase')}
       </section>
     )
 
   // Valla (recomendada): banda negra, contraste máximo con el amarillo de la marca
   return (
-    <section aria-label="Promoción" className="relative mb-5 overflow-hidden rounded-2xl bg-ink text-white shadow-card">
+    <section aria-label="Promoción" className={`relative overflow-hidden rounded-2xl bg-ink text-white shadow-card ${className || 'mb-5'}`}>
       <div className="absolute inset-x-0 top-0 h-1.5 bg-[repeating-linear-gradient(135deg,#ffb01d_0_12px,#1f1f1c_12px_24px)]" aria-hidden />
       <div className="pointer-events-none absolute -right-16 -top-16 size-56 rounded-full bg-brand/20 blur-2xl" aria-hidden />
-      <CloseBtn onClick={close} dark />
+      {dismissible && <CloseBtn onClick={close} dark />}
       <div className="relative flex flex-col gap-4 p-5 pt-6 md:flex-row md:items-center md:gap-6">
         <div className="flex-1">
           <p className="flex items-center gap-1.5 font-display text-xs font-extrabold uppercase tracking-[0.18em] text-brand">
@@ -137,10 +158,10 @@ export function PromoBanner({ variant = 'valla' }: { variant?: PromoVariant }) {
         </div>
       </div>
       <div className="relative flex flex-col gap-2 border-t border-white/10 px-5 py-3 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-xs text-white/60">Coordinamos el canje por teléfono al {PHONE}.</p>
-        <a href={TEL} className="btn-primary py-2.5 text-sm">
-          <Phone className="size-4" /> Quiero canjear
-        </a>
+        <p className="text-xs text-white/60">
+          {signup ? 'Creá tu cuenta gratis y coordinamos el canje.' : `Coordinamos el canje por teléfono al ${PHONE}.`}
+        </p>
+        {cta('btn-primary py-2.5 text-sm', 'Quiero canjear')}
       </div>
     </section>
   )
