@@ -1,5 +1,5 @@
 import { NavLink, Outlet } from 'react-router-dom'
-import { ClipboardList, LayoutDashboard, Package, Settings, Truck, Users } from 'lucide-react'
+import { ClipboardList, LayoutDashboard, Package, Settings, ShieldCheck, Truck, Users } from 'lucide-react'
 
 const links = [
   { to: '/admin', label: 'Indicadores', icon: LayoutDashboard, end: true },
@@ -7,6 +7,7 @@ const links = [
   { to: '/admin/entregas', label: 'Entregas', icon: Truck },
   { to: '/admin/productos', label: 'Productos', icon: Package },
   { to: '/admin/clientes', label: 'Clientes', icon: Users },
+  { to: '/admin/permisos', label: 'Permisos', icon: ShieldCheck },
   { to: '/admin/configuracion', label: 'Configuración', icon: Settings },
 ]
 

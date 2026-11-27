@@ -1,5 +1,5 @@
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
-import { LayoutDashboard, LogIn, LogOut, Package, ShoppingCart, Store, User } from 'lucide-react'
+import { LayoutDashboard, LogIn, LogOut, Package, ShoppingCart, Store, Truck, User } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { useCart } from '../context/CartContext'
 
@@ -13,7 +13,7 @@ function Wordmark() {
 }
 
 export function Layout() {
-  const { session, isAdmin, signOut } = useAuth()
+  const { session, isAdmin, isDriver, signOut } = useAuth()
   const { count } = useCart()
   const navigate = useNavigate()
   const { pathname } = useLocation()
@@ -47,11 +47,21 @@ export function Layout() {
                 Panel administrativo
               </NavLink>
             )}
+            {isDriver && (
+              <NavLink to="/reparto" className={desktopLink}>
+                Mis entregas
+              </NavLink>
+            )}
           </nav>
           <div className="ml-auto flex items-center gap-1">
             {isAdmin && (
               <Link to="/admin" className="btn-ghost md:hidden" aria-label="Panel administrativo">
                 <LayoutDashboard className="size-5" />
+              </Link>
+            )}
+            {isDriver && (
+              <Link to="/reparto" className="btn-ghost md:hidden" aria-label="Mis entregas">
+                <Truck className="size-5" />
               </Link>
             )}
             <Link

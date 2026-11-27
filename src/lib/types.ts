@@ -1,4 +1,4 @@
-export type Role = 'cliente' | 'admin'
+export type Role = 'cliente' | 'admin' | 'repartidor'
 
 export interface Profile {
   id: string
@@ -84,7 +84,7 @@ export interface OrderHistory {
   status: OrderStatus
   payment_status: PaymentStatus
   note: string | null
-  source: 'cliente' | 'admin' | 'pasarela' | 'sistema'
+  source: 'cliente' | 'admin' | 'pasarela' | 'sistema' | 'repartidor'
   created_at: string
 }
 
@@ -110,6 +110,9 @@ export interface Order {
   paid_at: string | null
   delivered_at: string | null
   cancelled_at: string | null
+  /** Repartidor asignado (perfil con rol repartidor) */
+  assigned_to: string | null
+  assigned_at: string | null
   order_items?: OrderItem[]
   order_status_history?: OrderHistory[]
   email_notifications?: { kind?: string; status: string; created_at: string; error: string | null }[]

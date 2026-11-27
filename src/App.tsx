@@ -4,7 +4,7 @@ import { AuthProvider } from './context/AuthContext'
 import { CartProvider } from './context/CartContext'
 import { ToastProvider } from './context/ToastContext'
 import { Layout } from './components/Layout'
-import { RequireAdmin, RequireAuth } from './components/Guards'
+import { RequireAdmin, RequireAuth, RequireDriver } from './components/Guards'
 import { PageLoader } from './components/ui'
 import { isConfigured } from './lib/supabase'
 import Welcome from './pages/Welcome'
@@ -28,6 +28,8 @@ const AdminProducts = lazy(() => import('./pages/admin/AdminProducts'))
 const AdminCustomers = lazy(() => import('./pages/admin/AdminCustomers').then((m) => ({ default: m.AdminCustomers })))
 const AdminCustomerDetail = lazy(() => import('./pages/admin/AdminCustomers').then((m) => ({ default: m.AdminCustomerDetail })))
 const AdminSettings = lazy(() => import('./pages/admin/AdminSettings'))
+const AdminPermissions = lazy(() => import('./pages/admin/AdminPermissions'))
+const DriverDeliveries = lazy(() => import('./pages/DriverDeliveries'))
 
 function NotConfigured() {
   return (
@@ -67,6 +69,14 @@ export default function App() {
                   <Route path="/domicilios/nuevo" element={auth(<AddressEdit />)} />
                   <Route path="/domicilios/:id" element={auth(<AddressEdit />)} />
                   <Route
+                    path="/reparto"
+                    element={
+                      <RequireDriver>
+                        <DriverDeliveries />
+                      </RequireDriver>
+                    }
+                  />
+                  <Route
                     path="/admin"
                     element={
                       <RequireAdmin>
@@ -80,6 +90,7 @@ export default function App() {
                     <Route path="productos" element={<AdminProducts />} />
                     <Route path="clientes" element={<AdminCustomers />} />
                     <Route path="clientes/:id" element={<AdminCustomerDetail />} />
+                    <Route path="permisos" element={<AdminPermissions />} />
                     <Route path="configuracion" element={<AdminSettings />} />
                   </Route>
                 </Route>

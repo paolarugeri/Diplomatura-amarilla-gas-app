@@ -3,14 +3,14 @@ import { Link, useNavigate } from 'react-router-dom'
 import { Home, LogOut, MapPin, Package, Pencil, Plus, Star, Trash2, User } from 'lucide-react'
 import { supabase, friendlyError } from '../lib/supabase'
 import type { Address } from '../lib/types'
-import { formatAddress, formatDate } from '../lib/format'
+import { formatAddress, formatDate, roleLabel } from '../lib/format'
 import { validateName, validatePhone } from '../lib/validation'
 import { useAuth } from '../context/AuthContext'
 import { useToast } from '../context/ToastContext'
 import { Field, PageLoader, PageTitle, Spinner } from '../components/ui'
 
 export default function Profile() {
-  const { profile, refreshProfile, signOut, isAdmin } = useAuth()
+  const { profile, refreshProfile, signOut } = useAuth()
   const navigate = useNavigate()
   const toast = useToast()
   const [addresses, setAddresses] = useState<Address[] | null>(null)
@@ -90,7 +90,7 @@ export default function Profile() {
             <div>
               <h2 className="text-lg font-extrabold">{profile.full_name}</h2>
               <p className="text-xs text-muted">
-                {isAdmin ? 'Administrador' : 'Cliente'} desde {formatDate(profile.created_at)}
+                {roleLabel[profile.role] ?? 'Cliente'} desde {formatDate(profile.created_at)}
               </p>
             </div>
           </div>
